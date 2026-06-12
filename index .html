@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>GP Survey · Round 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+  :root{
+    /* ── KRAFTON RED (브랜드 정확값이 있으면 이 한 줄만 교체) ── */
+    --accent:#E4002B; --accent-deep:#B3001F; --accent-soft:#FCE4E8;
+    --bg:#F2F3F5; --surface:#FFFFFF; --surface-2:#F7F8FA;
+    --ink:#1A1A1F; --ink-soft:#5A5E68; --ink-faint:#9298A2;
+    --line:#E4E6EA; --line-soft:#EFF1F4; --danger:#C8102E; --amber:#E8A33D; --blue:#3B82F6;
+    --shadow:0 1px 2px rgba(26,26,31,.04), 0 8px 28px rgba(26,26,31,.07);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  #app{font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Hiragino Sans","Microsoft YaHei","Malgun Gothic",sans-serif;
+    color:var(--ink);max-width:480px;margin:0 auto;padding:0 0 40px;-webkit-font-smoothing:antialiased;line-height:1.6;}
+
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(242,243,245,.88);backdrop-filter:blur(10px);padding:12px 18px 11px;border-bottom:1px solid var(--line);}
+  .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13.5px;letter-spacing:.2px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .langsw{display:flex;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;}
+  .langsw button{border:none;background:none;font-family:inherit;font-size:11.5px;font-weight:700;color:var(--ink-faint);padding:4px 9px;border-radius:999px;cursor:pointer;transition:.15s;}
+  .langsw button.on{background:var(--accent);color:#fff;}
+  .timer{font-size:11.5px;font-weight:600;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+
+  .progress{display:flex;align-items:center;margin-top:11px;padding:0 2px;}
+  .pnode{flex:0 0 auto;}
+  .pdot{width:10px;height:10px;border-radius:50%;background:var(--line);border:2px solid var(--bg);transition:.35s;position:relative;z-index:2;}
+  .pnode.done .pdot{background:var(--accent);}
+  .pnode.current .pdot{background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);}
+  .pline{flex:1 1 auto;height:2px;background:var(--line);position:relative;z-index:1;}
+  .pline .fill{position:absolute;inset:0;width:0;background:var(--accent);transition:.45s;}
+
+  .testbar{background:#FFF4D6;border-bottom:1px solid #F0DFA8;color:#7A5A12;font-size:11.5px;font-weight:700;text-align:center;padding:7px 14px;}
+
+  .page{padding:22px 20px 0;animation:rise .4s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  .sec-eyebrow{font-size:12px;font-weight:800;color:var(--accent-deep);letter-spacing:.6px;text-transform:uppercase;}
+  .sec-title{font-size:22px;font-weight:800;letter-spacing:-.4px;margin:5px 0 0;line-height:1.34;}
+  .sec-desc{font-size:14px;color:var(--ink-soft);margin:12px 0 0;}
+  .group-head{font-size:15px;font-weight:800;margin:26px 0 2px;display:flex;align-items:center;gap:8px;}
+  .group-head:before{content:"";width:4px;height:16px;border-radius:2px;background:var(--accent);}
+  .note{font-size:13px;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line-soft);border-radius:12px;padding:11px 14px;margin:16px 0 0;}
+
+  .q{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px;margin-top:14px;box-shadow:var(--shadow);transition:border-color .2s;}
+  .q.missing{border-color:var(--danger);animation:shake .3s;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+  .q-num{font-size:11px;font-weight:800;color:var(--accent-deep);letter-spacing:.5px;}
+  .q-opt{font-size:11px;font-weight:700;color:var(--ink-faint);margin-left:6px;}
+  .q-text{font-size:15.5px;font-weight:600;letter-spacing:-.2px;margin:4px 0 0;line-height:1.5;}
+  .q-tip{font-size:12.5px;color:var(--ink-soft);margin:8px 0 0;background:var(--surface-2);border-radius:9px;padding:8px 11px;}
+
+  .scale{display:flex;gap:7px;margin-top:14px;}
+  .scale button{flex:1;border:1.5px solid var(--line);background:var(--surface);border-radius:13px;padding:13px 0;font-size:16px;font-weight:700;color:var(--ink-soft);cursor:pointer;font-family:inherit;transition:.15s;}
+  .scale button:hover{border-color:var(--accent);}
+  .scale button.on{background:var(--accent);border-color:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 6px 14px rgba(228,0,43,.3);}
+  .anchors{display:flex;justify-content:space-between;margin-top:9px;font-size:11.5px;color:var(--ink-faint);font-weight:500;gap:10px;}
+  .anchors span{max-width:46%;}
+  .anchors span:last-child{text-align:right;}
+  .nps{display:grid;grid-template-columns:repeat(11,1fr);gap:5px;margin-top:14px;}
+  .nps button{border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 0;font-size:12.5px;font-weight:700;color:var(--ink-soft);cursor:pointer;font-family:inherit;transition:.12s;}
+  .nps button.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  .opt{display:flex;align-items:flex-start;gap:11px;border:1.5px solid var(--line);background:var(--surface);border-radius:13px;padding:12px 14px;margin-top:9px;cursor:pointer;font-size:14.5px;font-weight:500;color:var(--ink);transition:.15s;line-height:1.45;}
+  .opt:hover{border-color:var(--accent);background:var(--surface-2);}
+  .opt.on{border-color:var(--accent);background:var(--accent-soft);}
+  .opt.disabled{opacity:.4;pointer-events:none;}
+  .tick{flex:0 0 auto;width:20px;height:20px;border-radius:50%;border:2px solid var(--line);margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;}
+  .tick.sq{border-radius:6px;}
+  .opt.on .tick{border-color:var(--accent);background:var(--accent);}
+  .opt.on .tick:after{content:"";width:9px;height:9px;border-radius:50%;background:#fff;}
+  .opt.on .tick.sq:after{content:"";width:5px;height:9px;border:2px solid #fff;border-top:0;border-left:0;border-radius:1px;transform:rotate(42deg) translateY(-1px);background:none;}
+  .maxhint{font-size:11.5px;color:var(--ink-faint);font-weight:600;margin-top:10px;}
+
+  textarea,input[type=text],input[type=tel],input[type=password]{width:100%;font-family:inherit;font-size:14.5px;color:var(--ink);background:var(--surface-2);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:12px;resize:vertical;line-height:1.55;}
+  textarea:focus,input:focus{outline:none;border-color:var(--accent);background:var(--surface);}
+  textarea{min-height:84px;}
+  .subinput{margin-top:0;}
+  .cond-note{font-size:11.5px;color:var(--ink-faint);margin:14px 0 -2px;display:flex;align-items:center;gap:6px;}
+  .cond-note:before{content:"\u21B3";color:var(--accent);font-weight:700;}
+
+  .hero{background:linear-gradient(160deg,var(--accent),var(--accent-deep));color:#fff;border-radius:22px;padding:26px 22px 24px;margin-top:8px;box-shadow:0 14px 30px rgba(179,0,31,.28);}
+  .hero h1{font-size:25px;font-weight:800;letter-spacing:-.5px;margin:0;line-height:1.3;}
+  .hero p{font-size:14px;opacity:.94;margin:12px 0 0;line-height:1.65;}
+  .meta{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:4px;margin-top:16px;box-shadow:var(--shadow);}
+  .meta-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line-soft);font-size:14px;gap:12px;}
+  .meta-row:last-child{border-bottom:0;}
+  .meta-row .k{color:var(--ink-soft);font-weight:500;flex:0 0 auto;} .meta-row .v{font-weight:700;text-align:right;}
+  .reward-card{background:var(--accent-soft);border:1px solid #F4C4CE;border-radius:16px;padding:16px 18px;margin-top:14px;}
+  .reward-card h3{margin:0;font-size:14.5px;font-weight:800;color:var(--accent-deep);}
+  .reward-card p{margin:8px 0 0;font-size:13.5px;color:#8A2030;line-height:1.6;}
+  .assure{font-size:12.5px;color:var(--ink-soft);margin-top:16px;line-height:1.6;}
+  .contact{font-size:12.5px;color:var(--ink-faint);margin-top:14px;}
+
+  .ways{counter-reset:w;margin:14px 0 0;padding:0;list-style:none;}
+  .ways li{counter-increment:w;display:flex;gap:11px;align-items:flex-start;font-size:13.5px;font-weight:500;padding:9px 0;border-bottom:1px solid var(--line-soft);}
+  .ways li:last-child{border-bottom:0;}
+  .ways li:before{content:counter(w);flex:0 0 auto;width:22px;height:22px;border-radius:7px;background:var(--accent-soft);color:var(--accent-deep);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+
+  .nav{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 26%);padding:18px 20px 22px;margin-top:26px;display:flex;gap:10px;}
+  .btn{flex:1;border:none;border-radius:14px;padding:15px 0;font-size:15.5px;font-weight:800;font-family:inherit;cursor:pointer;transition:.18s;}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 8px 20px rgba(228,0,43,.3);}
+  .btn-primary:hover{background:var(--accent-deep);}
+  .btn-primary:disabled{opacity:.6;cursor:default;}
+  .btn-ghost{flex:0 0 92px;background:var(--surface);color:var(--ink-soft);border:1.5px solid var(--line);box-shadow:none;}
+  .btn-ghost:hover{border-color:var(--ink-faint);}
+
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:11px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:.3s;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:88%;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .done-hero{text-align:center;padding:54px 8px 0;}
+  .done-mark{width:72px;height:72px;border-radius:50%;background:var(--accent-soft);margin:0 auto;display:flex;align-items:center;justify-content:center;}
+  .done-mark:after{content:"";width:18px;height:32px;border:4px solid var(--accent);border-top:0;border-left:0;border-radius:2px;transform:rotate(42deg) translateY(-3px);}
+  .done-hero h1{font-size:23px;font-weight:800;margin:20px 0 0;letter-spacing:-.4px;}
+  .done-hero p{font-size:14px;color:var(--ink-soft);margin:10px 0 0;line-height:1.6;}
+  .done-link{display:inline-block;margin-top:26px;font-size:13px;font-weight:700;color:var(--ink-faint);cursor:pointer;padding:8px 16px;border:1px solid var(--line);border-radius:999px;}
+  .admin-link{text-align:center;font-size:12px;font-weight:600;color:var(--ink-faint);margin-top:26px;cursor:pointer;padding:8px;}
+  .admin-link:hover{color:var(--accent-deep);}
+  .logout{font-size:12px;font-weight:700;color:var(--ink-soft);cursor:pointer;}
+  .login-wrap{text-align:center;padding:48px 8px 0;}
+  .login-ico{width:58px;height:58px;border-radius:16px;background:var(--ink);margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:26px;}
+  .login-wrap h1{font-size:21px;font-weight:800;margin:0;}
+  .login-wrap p{font-size:13px;color:var(--ink-soft);margin:8px 0 0;}
+  .dash-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
+  .dcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 16px;box-shadow:var(--shadow);}
+  .dcard .dl{font-size:11.5px;font-weight:700;color:var(--ink-soft);}
+  .dcard .dn{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-top:4px;font-variant-numeric:tabular-nums;}
+  .dcard .ds{font-size:11px;color:var(--ink-faint);margin-top:2px;}
+  .dcard.span2{grid-column:span 2;}
+  .nps-big{display:flex;align-items:baseline;gap:10px;}
+  .nps-big .v{font-size:30px;font-weight:800;color:var(--accent-deep);}
+  .nps-seg{display:flex;height:9px;border-radius:5px;overflow:hidden;margin-top:10px;}
+  .nps-seg span{display:block;height:100%;}
+  .nps-legend{display:flex;gap:14px;font-size:11px;color:var(--ink-soft);margin-top:8px;}
+  .nps-legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;}
+  .filters{display:flex;gap:8px;margin-top:16px;}
+  .filters select{flex:1;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;}
+  .dash-sec{font-size:12px;font-weight:800;color:var(--accent-deep);letter-spacing:.5px;text-transform:uppercase;margin:26px 0 0;}
+  .dq{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 16px;margin-top:12px;box-shadow:var(--shadow);}
+  .dq .dqt{font-size:13.5px;font-weight:700;line-height:1.45;}
+  .dq .dqn{font-size:11px;font-weight:800;color:var(--accent-deep);}
+  .dq .dqmeta{font-size:11.5px;color:var(--ink-faint);font-weight:600;margin-top:2px;}
+  .bar{display:flex;align-items:center;gap:10px;margin-top:9px;font-size:12.5px;}
+  .bar-l{flex:0 0 32%;color:var(--ink-soft);font-weight:500;line-height:1.3;word-break:keep-all;}
+  .bar-l.wide{flex:0 0 48%;}
+  .bar-track{flex:1;height:18px;background:var(--surface-2);border-radius:6px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--accent);border-radius:6px;transition:width .5s;min-width:2px;}
+  .bar-v{flex:0 0 auto;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;min-width:58px;text-align:right;}
+  .empty-q{font-size:12.5px;color:var(--ink-faint);font-style:italic;margin-top:8px;}
+  .dash-actions{display:flex;gap:8px;margin-top:24px;}
+  .abtn{flex:1;border:1.5px solid var(--line);background:var(--surface);color:var(--ink-soft);border-radius:12px;padding:12px 0;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;}
+  .abtn:hover{border-color:var(--accent);color:var(--accent-deep);}
+  .secnote{font-size:11.5px;color:var(--ink-faint);line-height:1.6;margin-top:16px;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:12px;padding:11px 14px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================================================================
+   GP 서베이 1회차 — GitHub Pages 배포용
+   배포 전 아래 SCRIPT_URL 한 줄만 본인 Apps Script 웹앱 URL로 교체하세요.
+   (비워두면 '테스트 모드'로 동작하며 시트로 전송하지 않습니다.)
+=================================================================== */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxBzGhltsT1-S1OIXfEsGzuu11RnHjwAaz-Gp23lN3lIl5e3-kTpFeKZ9BgmAcFirE7/exec";
+const TEST_MODE = !SCRIPT_URL || SCRIPT_URL.indexOf("PASTE_YOUR")===0;
+
+/* 관리자 모드 — 인트로 하단 '🔒 관리자 모드' 링크로 진입, 비번 입력 후 대시보드.
+   비번은 공개 페이지 특성상 '가벼운 칸막이'이며, 보상 연락처·자유응답 원문은
+   대시보드로 전송되지 않고 권한 걸린 시트에만 남습니다.
+   DASH_KEY 는 Code.gs 의 DASH_KEY 와 반드시 동일해야 합니다.            */
+const ADMIN_PW = "gp2026";
+const DASH_KEY = "gp-dash-2026";
+
+
+/* =================== 문항 구조 (언어 무관) =================== */
+/* type: scale | nps | single | single_other | multi | multi_other | text | text_one
+   other:true 면 마지막에 '기타' 입력 옵션 추가 (index = opts.length)
+   showIf: 분기 노출 조건 (인덱스/숫자 기반이라 언어와 무관)               */
+const STRUCT=[
+  {id:"s0",items:[
+    {t:"q",id:"Q1",type:"single"},
+    {t:"q",id:"Q2",type:"single"},
+  ]},
+  {id:"s1",note:true,items:[
+    {t:"q",id:"Q3",type:"scale"},{t:"q",id:"Q4",type:"scale"},{t:"q",id:"Q5",type:"scale"},
+    {t:"q",id:"Q6",type:"scale"},{t:"q",id:"Q7",type:"scale"},{t:"q",id:"Q8",type:"scale"},
+    {t:"q",id:"Q9",type:"scale"},{t:"q",id:"Q10",type:"scale"},{t:"q",id:"Q11",type:"scale"},
+    {t:"q",id:"Q12",type:"scale"},
+  ]},
+  {id:"s2",items:[
+    {t:"q",id:"Q13",type:"single_other",other:true},
+    {t:"head",key:"nl"},
+    {t:"q",id:"Q14",type:"scale"},
+    {t:"q",id:"Q14_1",type:"single_other",optional:true,other:true,showIf:a=>typeof a.Q14==="number"&&a.Q14<=2},
+    {t:"q",id:"Q15",type:"nps"},
+    {t:"q",id:"Q16",type:"multi",max:3},
+    {t:"q",id:"Q17",type:"text",optional:true},
+    {t:"head",key:"slack"},
+    {t:"q",id:"Q18",type:"scale"},
+    {t:"q",id:"Q19",type:"scale"},
+    {t:"q",id:"Q19_1",type:"single_other",optional:true,other:true,showIf:a=>typeof a.Q19==="number"&&a.Q19<=2},
+    {t:"q",id:"Q20",type:"scale"},
+  ]},
+  {id:"s3",items:[
+    {t:"q",id:"Q21",type:"scale"},
+    {t:"q",id:"Q22",type:"multi"},
+    {t:"q",id:"Q23",type:"scale"},
+    {t:"q",id:"Q24",type:"scale"},
+  ]},
+  {id:"s4",items:[
+    {t:"q",id:"Q25",type:"scale"},
+    {t:"q",id:"Q26",type:"multi",max:3},
+    {t:"q",id:"Q27",type:"multi_other",other:true},
+    {t:"q",id:"Q28",type:"text",optional:true},
+    {t:"q",id:"Q29",type:"text",optional:true},
+    {t:"q",id:"Q30",type:"text",optional:true},
+  ]},
+  {id:"reward",items:[
+    {t:"q",id:"Q31",type:"single",optional:true},
+    {t:"q",id:"Q31_hq",type:"text_one",optional:true,showIf:a=>a.Q31===0},
+    {t:"q",id:"Q31_ov",type:"text_one",optional:true,showIf:a=>a.Q31===1},
+  ]},
+];
+const TARGET=76;
+const QLBL={Q14_1:"Q14-1",Q19_1:"Q19-1",Q31_hq:"Q31-1(HQ)",Q31_ov:"Q31-1(해외)"};
+const qLabel=id=>QLBL[id]||id;
+function findItem(id){for(const s of STRUCT)for(const it of s.items)if(it.t==="q"&&it.id===id)return it;}
+
+/* =================== 다국어 텍스트 =================== */
+const I18N={
+ko:{
+  name:"한국어",
+  ui:{title:"GP 서베이 · 1회차",start:"설문 시작하기",next:"다음",prev:"이전",submit:"제출하기",saving:"전송 중…",
+    doneTitle:"응답이 제출되었습니다",doneSub:"소중한 의견 감사합니다.\n응답은 안전하게 기록되었습니다.",home:"처음으로",
+    missing:n=>`아직 응답하지 않은 필수 문항이 ${n}개 있어요`,max:n=>`최대 ${n}개까지 선택할 수 있어요`,
+    sendFail:"전송에 실패했어요. 네트워크를 확인하고 다시 시도해주세요.",
+    testbar:"테스트 모드 — 응답이 시트로 전송되지 않습니다 (SCRIPT_URL 미설정)",
+    selfree:"직접 입력해주세요",freeph:"자유롭게 적어주세요"},
+  agree:["전혀 그렇지 않다","매우 그렇다"],
+  intro:{t1:"GP CONNECT 1년,",t2:"함께 돌아보는 시간",
+    p:"안녕하세요, GP CONNECT입니다. GP CONNECT 뉴스레터가 발행을 시작한 지 어느덧 1년이 되어가고 있습니다. 한 해 동안 함께 봐주신 콘텐츠와 이벤트를 돌아보고, 앞으로의 방향을 함께 그려가기 위해 구성원 여러분의 의견을 듣고자 합니다.",
+    mk:["소요 시간","운영 기간","응답 대상"],mv:["약 9~11분","6/16(화)~6/22(월) 23:59 KST","GP 본부 전 구성원"],
+    rt:"🎁 응답 감사 보상",rp:"응답해주신 모든 분께 작은 감사의 마음을 담아 5천원 상품권을 드리고, 응답자 중 추첨을 통해 10만원 상품권을 3분께 추가로 드립니다. (HQ 2분 + 지역 오피스 1분)",rnote:"HQ — 네이버페이 상품권 / EPS·NAPS·WPS — 스팀 상품권",
+    assure:"응답 내용은 개인 식별이 불가능한 형태로 처리되며, 부서·근속 등 거친 단위로만 분석에 활용됩니다. 본 조사는 사내 콘텐츠·이벤트 개선만을 목적으로 합니다.",
+    def:"※ 본 설문에서 ‘GP 사내 콘텐츠’란? GP의 뉴스레터 ‘GP CONNECT’와 ‘GP Internal Communications’ 슬랙 채널을 의미합니다.",
+    contact:"문의 : Publishing Communications Part"},
+  head:{nl:"GP CONNECT 뉴스레터",slack:"GP 슬랙 채널"},
+  misc:{scaleNote:"아래 문항은 모두 5점 척도로 답해주세요."},
+  sec:{s0:{e:"Section 0",t:"응답자 속성"},
+    s1:{e:"Section 1",t:"사내 콘텐츠·이벤트에 대해",d:"GP의 사내 콘텐츠와 이벤트가 평소 어떤 영향을 주고 있는지에 대한 의견을 듣는 문항입니다."},
+    s2:{e:"Section 2",t:"채널별 운영 평가"},
+    s3:{e:"Section 3",t:"콘텐츠·이벤트 중 동료와 가까워진 계기"},
+    s4:{e:"Section 4",t:"사내 콘텐츠·이벤트 개선 방향",d:"자유응답 문항은 모두 선택입니다."},
+    reward:{e:"마지막",t:"보상 수령 (선택)",d:"본 서베이는 익명으로 진행되나, 응답 완료에 대한 감사의 기프티콘을 보내드리기 위해 정보가 필요합니다. 수령을 희망하시는 분만 작성해주시면 됩니다."}},
+  q:{
+    Q1:{text:"크래블스님께서 현재 소속된 조직을 선택해주세요.",opts:["GPD1","GPD2","GPD3","S&O","GCD","PSM","EPS","NAPS","WPS","답변하고 싶지 않음"]},
+    Q2:{text:"크래블스님께서 GP 본부에 합류하신 지 어느 정도 되셨나요?",opts:["6개월 미만","6개월 ~ 1년","1 ~ 3년","3년 이상","답변하고 싶지 않음"]},
+    Q3:{text:"GP의 사내 콘텐츠·이벤트는 회사를 다니는 일상에 재미와 활력을 더해준다."},
+    Q4:{text:"GP의 사내 콘텐츠 덕분에 평소 잘 모르던 다른 팀이나 동료의 일과 모습을 더 알게 된다."},
+    Q5:{text:"GP의 사내 콘텐츠를 보면서 “내가 GP의 일원이구나” 하는 느낌이 들 때가 있다."},
+    Q6:{text:"GP의 사내 콘텐츠를 보면 나와 비슷한 고민과 방식으로 일하는 동료들이 많다는 것을 느낀다."},
+    Q7:{text:"GP의 사내 콘텐츠 덕분에 다른 팀 일을 이해하게 되어 협업에 도움이 된 적이 있다."},
+    Q8:{text:"GP의 사내 콘텐츠를 통해 GP가 앞으로 어디로 나아가려 하는지 감이 잡힌다."},
+    Q9:{text:"GP의 사내 콘텐츠 덕분에 GP에서 일어나는 주요 결정이나 변화의 배경을 이해할 수 있다."},
+    Q10:{text:"GP의 사내 콘텐츠는 내가 평소 일할 때 “내가 왜 이 일을 하고 있지” 같은 큰 그림을 자연스럽게 떠올리게 한다."},
+    Q11:{text:"GP의 사내 콘텐츠·이벤트를 통해 GP만의 일하는 방식이나 분위기가 어떤지 자연스럽게 알게 된다."},
+    Q12:{text:"GP의 ‘일하는 방식’ 콘텐츠(퍼블리싱 방법론·케이스 스터디·AI 등)가 내 업무 전문성에 도움이 된다."},
+    Q13:{text:"GP 사내 콘텐츠를 처음 접하게 되는 주된 경로는 무엇인가요?",opts:["GP CONNECT 뉴스레터 메일","GP 슬랙 채널","동료의 언급이나 대화","잘 모르겠다 / 특정 경로가 없다"],other:"그 외 (직접 입력)"},
+    Q14:{text:"GP CONNECT 발행 호를 매번 어느 정도 읽으시나요?",lo:"거의 안 본다",hi:"매호 정독한다"},
+    Q14_1:{text:"(선택) 매호 다 읽지 못하는 가장 큰 이유는?",opts:["시간이 부족해서","콘텐츠가 길어서","관심 가는 주제가 적어서","메일을 잘 안 봐서"],other:"기타"},
+    Q15:{text:"동료에게 GP CONNECT를 추천할 의향이 있다.",lo:"전혀 추천하지 않음",hi:"적극 추천함"},
+    Q16:{text:"GP CONNECT에서 앞으로 더 자주 다뤘으면 하는 주제를 골라주세요.",sub:"최대 3개까지 선택",opts:["슬기로운 GP생활 (워크샵·조직문화·복지·사내 행사 등)","Event (애정고사 등 참여형 이벤트 콘텐츠)","GP STORY · GP PEOPLE (구성원·팀·조직장 인터뷰)","크래프톤 게임 (신작·이벤트·게임쇼·테스트 등)","게임탐구생활·취향존중겜플리 (게임 장르·트렌드·큐레이션)","일하는 방식 (퍼블리싱 방법론·케이스 스터디·AI 등)","Perspective (조직장 기고 등 Thought Leadership)","특별히 더 보고 싶은 주제는 없다"]},
+    Q17:{text:"(선택) 지금까지 발행된 GP CONNECT 중 가장 기억에 남거나 인상 깊었던 호 또는 콘텐츠가 있다면 적어주세요."},
+    Q18:{text:"GP 슬랙 채널은 부담 없이 의견을 내고 반응할 수 있는 환경이라고 생각한다."},
+    Q19:{text:"GP 슬랙 채널에 올라오는 콘텐츠·이벤트·공지에 어느 정도 반응(이모지·댓글·참여 등)하시나요?",lo:"거의 반응하지 않는다",hi:"자주 반응한다"},
+    Q19_1:{text:"(선택) GP 슬랙 채널에 잘 반응하지 않게 되는 가장 큰 이유는?",opts:["슬랙 알림이 너무 많아서","반응할 시간이 없어서","콘텐츠가 내 관심과 거리가 멀어서","분위기가 부담스러워서"],other:"기타"},
+    Q20:{text:"GP 슬랙 채널의 현재 운영 방식(콘텐츠 종류·빈도·톤 등)에 만족한다.",lo:"매우 불만족",hi:"매우 만족"},
+    Q21:{text:"GP CONNECT나 사내 콘텐츠에서 본 이야기가 슬랙에서 화제가 되거나, 동료와 대화 나누는 계기가 된 적이 있다.",lo:"거의 없다",hi:"자주 있다"},
+    Q22:{text:"GP의 사내 콘텐츠·이벤트를 통해 동료와 가까워졌다고 느낀 순간이 있나요?",sub:"해당하는 항목 모두 선택",opts:["GP CONNECT 뉴스레터에서 다른 팀·동료 이야기를 봤을 때","슬랙 채널에서 동료의 글·반응을 봤을 때","애정고사 같은 사내 퀴즈·참여형 이벤트에 참여했을 때","슬랙 이벤트(인증샷·릴레이 등)에 참여했을 때","사내 콘텐츠에서 게임·취미·관심사가 비슷한 동료를 발견했을 때","특별히 콘텐츠·이벤트로 가까워진 적은 없다","잘 모르겠다"]},
+    Q23:{text:"GP CONNECT 뉴스레터·슬랙에서 본 동료 이야기 덕분에, 직접 만나본 적 없는 동료에게도 친근감을 느낄 때가 있다."},
+    Q24:{text:"GP의 사내 콘텐츠(인터뷰·구성원 소개 등)가 동료들의 기여·노력을 잘 조명한다고 느낀다."},
+    Q25:{text:"현재 GP의 사내 이벤트(애정고사·슬랙 인증샷·릴레이·뉴스레터 연계 이벤트 등) 운영에 만족한다.",lo:"매우 불만족",hi:"매우 만족"},
+    Q26:{text:"앞으로 더 자주 열렸으면 하는 사내 이벤트 형태는 무엇인가요?",sub:"최대 3개까지 선택",opts:["애정고사 같은 퀴즈·참여형 이벤트","슬랙 이벤트 (인증샷·릴레이·미션 등)","뉴스레터 연계 이벤트 (커버 응모·콘텐츠 공모 등)","게임 IP 관련 온라인 이벤트 (시사회·신작 소개 라이브 등)","관심사 기반 소규모 모임·스터디 (온라인)","글로벌 오피스 동료들과 연결되는 온라인 이벤트","오프라인 행사 (워크샵·번개 등)","특별히 관심 가는 형태가 없다","잘 모르겠다"]},
+    Q27:{text:"사내 이벤트 참여를 망설이는 가장 큰 요인이 있다면 무엇인가요?",sub:"해당하는 항목 모두 선택",opts:["업무가 바빠 시간을 내기 어려워서","행사 취지나 내용이 와닿지 않아서","참여 방식이 부담스러워서 (잘 모르는 사람과 어울리기, 노출 등)","알림을 놓쳐서","참여를 망설이게 하는 요인은 특별히 없다"],other:"기타"},
+    Q28:{text:"(선택) GP의 사내 콘텐츠·이벤트가 평소 본인의 회사 일상에 어떻게 자리잡고 있는지 한 단어 또는 한 문장으로 표현해주세요."},
+    Q29:{text:"(선택) GP의 사내 콘텐츠·이벤트·채널 운영에서 잘하고 있다고 생각하시는 부분, 그리고 보완이 필요하다고 생각하시는 부분을 자유롭게 적어주세요.",tip:"“좋다 / 안 좋다” 같은 일반적인 느낌보다는, 떠오르는 구체적인 호·콘텐츠·이벤트가 있다면 함께 적어주시면 도움이 됩니다."},
+    Q30:{text:"(선택) 마지막으로, GP 사내 커뮤니케이션 운영팀에 전하고 싶은 의견이 있다면 자유롭게 적어주세요."},
+    Q31:{text:"(선택) 거주 지역을 선택해주세요.",opts:["HQ (국내 거주)","지역 오피스 (해외 거주)"]},
+    Q31_hq:{text:"네이버페이 5,000원 상품권을 받으실 핸드폰 번호를 적어주세요.",ph:"010-XXXX-XXXX",tip:"하이픈을 포함해서 작성해주세요. ex) 010-XXXX-XXXX"},
+    Q31_ov:{text:"스팀 5,000원 상품권을 받으실 분께서는 아래 2가지를 모두 진행해주세요.<br>① 스팀 친구 추가 — 친구 코드 <b>1616510350</b> (프로필명: publishing_internal_comm_T)으로 친구 신청을 보내주세요.<br>② 아래에 본인 스팀 <b>프로필명(표시명)</b>을 입력해주세요. 로그인용 계정명(Account Name)이 아닙니다.",ph:"스팀 프로필명(표시명)",tip:"스팀 앱 우측 상단 본인 이름 클릭 → 본인 프로필 보기 → 페이지 상단에 표시되는 이름."},
+  }
+},
+en:{
+  name:"English",
+  ui:{title:"GP Survey · Round 1",start:"Start survey",next:"Next",prev:"Back",submit:"Submit",saving:"Sending…",
+    doneTitle:"Your response has been submitted",doneSub:"Thank you for your valuable input.\nYour response has been recorded.",home:"Back to start",
+    missing:n=>`You still have ${n} required question${n>1?"s":""} to answer.`,max:n=>`You can select up to ${n}.`,
+    sendFail:"Sending failed. Please check your connection and try again.",
+    testbar:"TEST MODE — responses are not sent to the sheet (SCRIPT_URL not set)",
+    selfree:"Please specify",freeph:"Feel free to write here"},
+  agree:["Strongly disagree","Strongly agree"],
+  intro:{t1:"GP CONNECT turns one —",t2:"let's look back together",
+    p:"Hello, Krabbles! It's been nearly a year since the newsletter launched. We'd love your thoughts as we look back on the past year's content and events, and shape where we go next.",
+    mk:["Time required","Open period","Audience"],mv:["About 9–11 min","Jun 16 (Tue)–22 (Mon) 23:59 KST","All GP members"],
+    rt:"🎁 Thank-you reward",rp:"Everyone who responds receives a 5,000 KRW gift card, and 3 respondents will additionally receive a 100,000 KRW gift card in a random drawing. (2 at HQ + 1 at a regional office)",rnote:"HQ — Naver Pay gift card / EPS·NAPS·WPS — Steam gift card",
+    assure:"Your responses are anonymized and analyzed only in aggregate (e.g., by department or tenure). This survey is conducted solely to improve internal content and events.",
+    def:"※ What is “GP internal content” in this survey? It refers to GP's newsletter “GP CONNECT” and the “GP Internal Communications” Slack channel.",
+    contact:"Contact : Publishing Communications Part"},
+  head:{nl:"GP CONNECT Newsletter",slack:"GP Slack channel"},
+  misc:{scaleNote:"Please answer all items below on a 5-point scale."},
+  sec:{s0:{e:"Section 0",t:"Basic info"},
+    s1:{e:"Section 1",t:"About GP internal content & events",d:"These questions ask how GP's internal content and events usually affect you."},
+    s2:{e:"Section 2",t:"Channel-by-channel evaluation"},
+    s3:{e:"Section 3",t:"Moments of connection through content & events"},
+    s4:{e:"Section 4",t:"Directions for improving content & events",d:"All open-ended questions are optional."},
+    reward:{e:"Final",t:"Reward (optional)",d:"This survey is anonymous, but we need some details to send a thank-you gift card for completing it. Please fill this in only if you'd like to receive one."}},
+  q:{
+    Q1:{text:"Which organization do you currently belong to?",opts:["GPD1","GPD2","GPD3","S&O","GCD","PSM","EPS","NAPS","WPS","Prefer not to answer"]},
+    Q2:{text:"How long have you been with the GP division?",opts:["Less than 6 months","6 months – 1 year","1 – 3 years","3+ years","Prefer not to answer"]},
+    Q3:{text:"GP's internal content and events add fun and energy to my everyday work life."},
+    Q4:{text:"GP's internal content helps me learn more about the work and day-to-day of other teams or colleagues I wouldn't otherwise get to know."},
+    Q5:{text:"GP's internal content sometimes makes me feel “I'm part of GP.”"},
+    Q6:{text:"GP's internal content shows me there are many colleagues with concerns and ways of working similar to mine."},
+    Q7:{text:"GP's internal content has helped me understand other teams' work in ways that made collaboration easier."},
+    Q8:{text:"Through GP's internal content, I get a sense of the direction GP is heading."},
+    Q9:{text:"GP's internal content helps me understand the context behind key decisions or changes at GP."},
+    Q10:{text:"GP's internal content helps me keep the bigger picture in mind — like why I'm doing this work — in my day-to-day."},
+    Q11:{text:"Through GP's internal content and events, I naturally come to understand GP's unique ways of working and culture."},
+    Q12:{text:"GP's “ways of working” content (publishing methods, case studies, AI, etc.) helps me build my professional expertise."},
+    Q13:{text:"How do you usually first come across GP internal content?",opts:["GP CONNECT newsletter email","GP Slack channel","A colleague's mention or conversation","Not sure / no particular route"],other:"Other (please specify)"},
+    Q14:{text:"How much of each GP CONNECT issue do you typically read?",lo:"Rarely read it",hi:"Read every issue thoroughly"},
+    Q14_1:{text:"(optional) What's the biggest reason you don't read every issue fully?",opts:["Not enough time","Content is too long","Few topics of interest","I don't check email often"],other:"Other"},
+    Q15:{text:"How likely are you to recommend GP CONNECT to a colleague?",lo:"Not at all likely",hi:"Extremely likely"},
+    Q16:{text:"Please choose topics you'd like GP CONNECT to cover more often.",sub:"Select up to 3",opts:["Smart GP Life (workshops, culture, benefits, internal events)","Events (participatory content like the GP CONNECT Trivia Challenge)","GP STORY · GP PEOPLE (member/team/leader interviews)","KRAFTON games (new titles, events, game shows, tests)","Game deep-dives & curation (genres, trends, picks)","Ways of working (publishing methods, case studies, AI)","Perspective (leader op-eds & thought leadership)","Nothing in particular"]},
+    Q17:{text:"(optional) If there's a GP CONNECT issue or piece of content that stood out or stayed with you, please share it."},
+    Q18:{text:"I feel comfortable sharing opinions and reacting in the GP Slack channel."},
+    Q19:{text:"How much do you react (emoji, comments, participation, etc.) to content, events, and notices in the GP Slack channel?",lo:"Rarely react",hi:"React often"},
+    Q19_1:{text:"(optional) What's the biggest reason you don't react much in the GP Slack channel?",opts:["Too many Slack notifications","No time to react","Content isn't relevant to me","It feels a bit intimidating to post or react"],other:"Other"},
+    Q20:{text:"I'm satisfied with how the GP Slack channel is currently run (content mix, frequency, tone, etc.).",lo:"Very dissatisfied",hi:"Very satisfied"},
+    Q21:{text:"A story I saw in GP CONNECT or internal content has come up on Slack or sparked a conversation with a colleague.",lo:"Almost never",hi:"Very often"},
+    Q22:{text:"Have there been moments you felt closer to a colleague through GP's internal content or events?",sub:"Select all that apply",opts:["When I read about other teams/colleagues in the GP CONNECT newsletter","When I saw a colleague's post/reaction in a Slack channel","When I joined an internal quiz/participatory event like the Trivia Challenge","When I joined a Slack event (photo challenges, relay-style events, etc.)","When I found a colleague with similar games/hobbies/interests in internal content","Nothing in particular has brought me closer through content/events","Not sure"]},
+    Q23:{text:"Colleague stories in GP CONNECT or Slack sometimes make me feel a sense of connection even with colleagues I've never met in person."},
+    Q24:{text:"I feel GP's internal content (interviews, member features, etc.) does a good job spotlighting colleagues' contributions and efforts."},
+    Q25:{text:"I'm satisfied with how GP's internal events are currently run (Trivia Challenge, Slack photo challenges/relay-style events, newsletter-linked events, etc.).",lo:"Very dissatisfied",hi:"Very satisfied"},
+    Q26:{text:"What kinds of internal events would you like to see more often?",sub:"Select up to 3",opts:["Quizzes/participatory events like the Trivia Challenge","Slack events (photo challenges, relay-style events, missions, etc.)","Newsletter-linked events (cover submissions, content contests, etc.)","Online events around game IP (preview events, livestreams introducing new titles, etc.)","Small interest-based meetups/study groups (online)","Online events connecting with global office colleagues","In-person events (workshops, meetups, etc.)","No format I'm particularly interested in","Not sure"]},
+    Q27:{text:"What's the biggest factor, if any, that makes you hesitate to join internal events?",sub:"Select all that apply",opts:["Too busy to make time","The event's purpose or content doesn't resonate","The way to participate feels uncomfortable (mixing with people I don't know, being in the spotlight, etc.)","I missed the notification","Nothing in particular makes me hesitate"],other:"Other"},
+    Q28:{text:"(optional) In a word or sentence, how do GP's internal content and events fit into your everyday work life?"},
+    Q29:{text:"(optional) Please share what you think GP's internal content, events, and channels do well, and what needs improvement.",tip:"Rather than a general “good / not good,” it helps if you mention a specific newsletter issue, article, or event that comes to mind."},
+    Q30:{text:"(optional) Finally, if you have any message for the GP internal communications team, please share it freely."},
+    Q31:{text:"(optional) Where are you based?",opts:["HQ (Korea)","Regional office (overseas)"]},
+    Q31_hq:{text:"Please enter the phone number to receive a 5,000 KRW Naver Pay gift card.",ph:"010-XXXX-XXXX",tip:"Include hyphens, e.g., 010-XXXX-XXXX."},
+    Q31_ov:{text:"To receive a 5,000 KRW Steam gift card, please complete both steps below.<br>① Add us on Steam — send a friend request to friend code <b>1616510350</b> (profile name: publishing_internal_comm_T).<br>② Enter your Steam <b>profile name (the display name others see)</b> below. This is not your account login name.",ph:"Steam profile name (display name)",tip:"In the Steam app, click your name at the top-right → View my profile → the name shown at the top of the page."},
+  }
+},
+zh:{
+  name:"中文",
+  ui:{title:"GP问卷 · 第1轮",start:"开始问卷",next:"下一步",prev:"上一步",submit:"提交",saving:"发送中…",
+    doneTitle:"您的回答已提交",doneSub:"感谢您宝贵的意见。\n您的回答已安全记录。",home:"返回首页",
+    missing:n=>`还有 ${n} 道必答题未回答。`,max:n=>`最多可选 ${n} 项。`,
+    sendFail:"发送失败。请检查网络后重试。",
+    testbar:"测试模式 — 回答不会发送到表格（SCRIPT_URL 未设置）",
+    selfree:"请填写",freeph:"请自由填写"},
+  agree:["完全不同意","非常同意"],
+  intro:{t1:"GP CONNECT 一周年，",t2:"一起回顾的时刻",
+    p:"简报开始发行已快满一年。我们希望听取您的意见，一起回顾这一年的内容与活动，并共同描绘今后的方向。",
+    mk:["所需时间","问卷回收期间","问卷对象"],mv:["约9～11分钟","6/16(周二)～6/22(周一) 23:59 KST","GP全体成员"],
+    rt:"🎁 应答感谢奖励",rp:"所有应答者都将获得5,000韩元礼券，并将抽取3名应答者额外赠送10万韩元礼券。（总部2名＋地区办公室1名）",rnote:"HQ — Naver Pay礼券 / EPS·NAPS·WPS — Steam礼券",
+    assure:"应答内容将以匿名的形式处理，仅以部门、工龄等粗略维度用于分析。本问卷仅以改进公司内部内容与活动为目的。",
+    def:"※ 本问卷中的“GP内部内容”指什么？指GP的简报“GP CONNECT”以及“GP Internal Communications” Slack频道。",
+    contact:"咨询 : Publishing Communications Part"},
+  head:{nl:"GP CONNECT 简报",slack:"GP Slack 频道"},
+  misc:{scaleNote:"以下题目均请用5点量表作答。"},
+  sec:{s0:{e:"Section 0",t:"基本信息"},
+    s1:{e:"Section 1",t:"关于GP内部内容与活动",d:"了解平时对您产生了怎样的影响。均为5点量表。"},
+    s2:{e:"Section 2",t:"各渠道运营评价"},
+    s3:{e:"Section 3",t:"通过内容·活动与同事拉近距离的契机"},
+    s4:{e:"Section 4",t:"内部内容·活动的改进方向",d:"所有开放式题目均为选填。"},
+    reward:{e:"最后",t:"奖励领取（选填）",d:"本问卷匿名进行，但为了向您发送完成应答的感谢礼券，需要相关信息。仅希望领取的人填写即可。"}},
+  q:{
+    Q1:{text:"请选择您当前所属的组织。",opts:["GPD1","GPD2","GPD3","S&O","GCD","PSM","EPS","NAPS","WPS","不愿回答"]},
+    Q2:{text:"您加入GP多久了？",opts:["不到6个月","6个月～1年","1～3年","3年以上","不愿回答"]},
+    Q3:{text:"GP的内部内容与活动为日常的公司生活增添了乐趣与活力。"},
+    Q4:{text:"多亏GP的内部内容，我更了解了平时不太熟悉的其他团队或同事的工作与日常。"},
+    Q5:{text:"在看GP内部内容时，我有时会感到“我是GP的一员”。"},
+    Q6:{text:"看GP内部内容时，我感到有很多同事的烦恼和工作方式与我相似。"},
+    Q7:{text:"多亏GP内部内容，我理解了其他团队的工作，从而对协作有所帮助。"},
+    Q8:{text:"通过GP内部内容，我能感受到GP今后想要前进的方向。"},
+    Q9:{text:"多亏GP内部内容，我能理解GP重要决策或变化背后的来龙去脉。"},
+    Q10:{text:"GP内部内容会让我在日常工作中自然地想起“我为什么在做这件事”这样的大局。"},
+    Q11:{text:"通过GP的内部内容与活动，我自然地了解到GP特有的工作方式与氛围。"},
+    Q12:{text:"GP的“工作方式”内容（发行方法论、案例研究、AI等）对我的业务专业能力有帮助。"},
+    Q13:{text:"您最初接触GP内部内容的主要渠道是什么？",opts:["GP CONNECT邮件简报","GP Slack频道","同事的提及或交谈","不清楚／没有特定渠道"],other:"其他（请填写）"},
+    Q14:{text:"您每期GP CONNECT大约会读多少？",lo:"几乎不看",hi:"每期都仔细阅读"},
+    Q14_1:{text:"（选填）您没能读完每一期的最大原因是什么？",opts:["时间不够","内容太长","感兴趣的主题少","不太看邮件"],other:"其他"},
+    Q15:{text:"您有多大意愿向同事推荐GP CONNECT？",lo:"完全不会推荐",hi:"非常愿意推荐"},
+    Q16:{text:"请选择您希望GP CONNECT今后更常涉及的主题。",sub:"最多选3项",opts:["智慧GP生活（工作坊、组织文化、福利、内部活动等）","活动（GP CONNECT知识竞答等参与型内容）","GP STORY · GP PEOPLE（成员／团队／负责人访谈）","KRAFTON游戏（新作、活动、游戏展、测试等）","游戏探索与品味推荐（游戏类型、趋势、精选）","工作方式（发行方法论、案例研究、AI等）","Perspective（负责人专栏等思想引领）","没有特别想多看的主题"]},
+    Q17:{text:"（选填）如果有让您印象最深刻的GP CONNECT期号或内容，请填写。"},
+    Q18:{text:"我认为GP Slack频道是一个可以毫无压力地发表意见和互动的环境。"},
+    Q19:{text:"您对GP Slack频道发布的内容、活动、公告有多少互动（表情、评论、参与等）？",lo:"几乎不互动",hi:"经常互动"},
+    Q19_1:{text:"（选填）您在GP Slack频道不太互动的最大原因是什么？",opts:["Slack通知太多","没有时间互动","内容与我的兴趣相距较远","氛围让我有压力"],other:"其他"},
+    Q20:{text:"我对GP Slack频道当前的运营方式（内容种类、频率、语气等）感到满意。",lo:"非常不满意",hi:"非常满意"},
+    Q21:{text:"我在GP CONNECT或内部内容中看到的话题，曾在Slack上引起讨论，或成为与同事交谈的契机。",lo:"几乎没有",hi:"经常有"},
+    Q22:{text:"您是否有过通过GP内部内容或活动而感到与同事拉近距离的时刻？",sub:"请选择所有符合项",opts:["在GP CONNECT简报中看到其他团队／同事的故事时","在Slack频道看到同事的帖子／反应时","参加知识竞答等社内测验／参与型活动时","参加Slack活动（晒图、接力等）时","在内部内容中发现游戏／爱好／兴趣相近的同事时","没有特别因内容／活动而拉近距离","不清楚"]},
+    Q23:{text:"多亏在GP CONNECT简报、Slack上看到的同事故事，我有时对从未见过面的同事也感到亲近。"},
+    Q24:{text:"我觉得GP内部内容（访谈、成员介绍等）很好地展现了同事们的贡献与努力。"},
+    Q25:{text:"我对GP当前内部活动的运营（知识竞答、Slack晒图／接力、简报联动活动等）感到满意。",lo:"非常不满意",hi:"非常满意"},
+    Q26:{text:"您希望今后更常举办哪种形式的内部活动？",sub:"最多选3项",opts:["知识竞答等测验／参与型活动","Slack活动（晒图、接力、任务等）","简报联动活动（封面征集、内容征稿等）","游戏IP相关线上活动（试映、新作介绍直播等）","基于兴趣的小型聚会／学习小组（线上）","与全球办公室同事连接的线上活动","线下活动（工作坊、聚会等）","没有特别感兴趣的形式","不清楚"]},
+    Q27:{text:"让您犹豫是否参加内部活动的最大因素是什么（如果有的话）？",sub:"请选择所有符合项",opts:["工作繁忙难以抽出时间","活动的主旨或内容没有共鸣","参与方式让我有压力（与不熟悉的人相处、曝光等）","错过了通知","没有特别让我犹豫的因素"],other:"其他"},
+    Q28:{text:"（选填）请用一个词或一句话，表达GP内部内容、活动在您日常公司生活中处于怎样的位置。"},
+    Q29:{text:"（选填）请自由填写您认为GP内部内容、活动、频道运营做得好的地方，以及需要改进的地方。",tip:"比起“好／不好”这样笼统的感受，如果能附上具体想到的期号、内容、活动会更有帮助。"},
+    Q30:{text:"（选填）最后，如果您有任何想对GP内部沟通运营团队说的，请自由填写。"},
+    Q31:{text:"（选填）请选择您的居住地区。",opts:["总部（在韩国居住）","地区办公室（海外居住）"]},
+    Q31_hq:{text:"请填写用于领取5,000韩元Naver Pay礼券的手机号码。",ph:"010-XXXX-XXXX",tip:"请包含连字符填写。"},
+    Q31_ov:{text:"如需领取5,000韩元Steam礼券，请完成以下两个步骤。<br>① 在Steam中添加好友 — 请向好友代码 <b>1616510350</b>（资料名: publishing_internal_comm_T）发送好友邀请。<br>② 在下方填写您本人的Steam <b>个人资料名（显示名）</b>。这不是用于登录的账号名。",ph:"Steam个人资料名（显示名）",tip:"在Steam应用右上角点击您的名字 → 查看本人资料 → 页面上方显示的名字。"},
+  }
+},
+ja:{
+  name:"日本語",
+  ui:{title:"GPサーベイ · 第1回",start:"アンケートを開始",next:"次へ",prev:"戻る",submit:"送信",saving:"送信中…",
+    doneTitle:"回答を送信しました",doneSub:"貴重なご意見をありがとうございます。\n回答は安全に記録されました。",home:"最初に戻る",
+    missing:n=>`未回答の必須設問が ${n} 件あります。`,max:n=>`最大 ${n} 個まで選択できます。`,
+    sendFail:"送信に失敗しました。通信環境を確認して再度お試しください。",
+    testbar:"テストモード — 回答はシートに送信されません（SCRIPT_URL 未設定）",
+    selfree:"自由にご記入ください",freeph:"自由にご記入ください"},
+  agree:["全くそう思わない","非常にそう思う"],
+  intro:{t1:"GP CONNECT 1年、",t2:"一緒に振り返る時間",
+    p:"こんにちは、GP CONNECTです。ニュースレターの発行開始から、まもなく1年になります。この1年のコンテンツやイベントを振り返り、これからの方向を一緒に描くため、皆さまのご意見をお聞かせください。",
+    mk:["所要時間","実施期間","回答対象"],mv:["約9～11分","6/16(火)～6/22(月) 23:59 KST","GP本部の全メンバー"],
+    rt:"🎁 回答のお礼",rp:"ご回答いただいた全員に5,000ウォン分のSteamギフトカードを、抽選で3名さまに10万ウォン分のギフトカードを追加で差し上げます。（HQ2名＋地域オフィス1名）",rnote:"HQ — NaverPayギフトカード / EPS·NAPS·WPS — Steamギフトカード",
+    assure:"回答は個人を特定できない形で処理され、部署・在籍年数などの単位でのみ分析に用いられます。本サーベイは社内コンテンツ・イベントの改善のみを目的としています。",
+    def:"※ 本アンケートでの「GP社内コンテンツ」とは？ GPのニュースレター「GP CONNECT」と「GP Internal Communications」Slackチャンネルを指します。",
+    contact:"お問い合わせ : Publishing Communications Part"},
+  head:{nl:"GP CONNECT ニュースレター",slack:"GP Slackチャンネル"},
+  misc:{scaleNote:"以下の設問はすべて5段階でお答えください。"},
+  sec:{s0:{e:"Section 0",t:"基本情報"},
+    s1:{e:"Section 1",t:"GP社内コンテンツ・イベントについて",d:"普段どのような影響を与えているかを伺います。すべて5段階。"},
+    s2:{e:"Section 2",t:"チャネル別の運営評価"},
+    s3:{e:"Section 3",t:"コンテンツ・イベントを通じて同僚と近づいたきっかけ"},
+    s4:{e:"Section 4",t:"社内コンテンツ・イベントの改善方向",d:"自由記述の設問はすべて任意。"},
+    reward:{e:"最後",t:"報酬の受け取り（任意）",d:"本サーベイは匿名で行われますが、回答完了のお礼としてギフトカードをお送りするために情報が必要です。受け取りをご希望の方のみご記入ください。"}},
+  q:{
+    Q1:{text:"現在ご所属の組織を選択してください。",opts:["GPD1","GPD2","GPD3","S&O","GCD","PSM","EPS","NAPS","WPS","回答したくない"]},
+    Q2:{text:"GP本部に参加されてどのくらいになりますか？",opts:["6ヶ月未満","6ヶ月～1年","1～3年","3年以上","回答したくない"]},
+    Q3:{text:"GPの社内コンテンツ・イベントは、会社で過ごす日常に楽しさと活力を加えてくれる。"},
+    Q4:{text:"GPの社内コンテンツのおかげで、普段あまり知らない他チームや同僚の仕事や姿をより知るようになる。"},
+    Q5:{text:"GPの社内コンテンツを見て「自分はGPの一員だ」と感じることがある。"},
+    Q6:{text:"GPの社内コンテンツを見ると、自分と似た悩みや働き方をしている同僚が多いと感じる。"},
+    Q7:{text:"GPの社内コンテンツのおかげで他チームの仕事を理解でき、協業に役立ったことがある。"},
+    Q8:{text:"GPの社内コンテンツを通じて、GPが今後どこへ向かおうとしているのか感覚がつかめる。"},
+    Q9:{text:"GPの社内コンテンツのおかげで、GPで起きる主要な決定や変化の背景を理解できる。"},
+    Q10:{text:"GPの社内コンテンツは、普段働くなかで「なぜ自分はこの仕事をしているのか」といった全体像を自然に思い起こさせる。"},
+    Q11:{text:"GPの社内コンテンツ・イベントを通じて、GPならではの働き方や雰囲気が自然とわかるようになる。"},
+    Q12:{text:"GPの「働き方」コンテンツ（パブリッシング方法論・ケーススタディ・AI等）は、自分の業務の専門性に役立つ。"},
+    Q13:{text:"GPの社内コンテンツを最初に知る主な経路は何ですか？",opts:["GP CONNECTニュースレターのメール","GP Slackチャンネル","同僚の言及や会話","よくわからない／特定の経路はない"],other:"その他（自由記入）"},
+    Q14:{text:"GP CONNECTの各号をどの程度読んでいますか？",lo:"ほとんど読まない",hi:"毎号じっくり読む"},
+    Q14_1:{text:"（任意）毎号を読み切れない最大の理由は何ですか？",opts:["時間が足りない","内容が長い","興味のあるテーマが少ない","メールをあまり見ない"],other:"その他"},
+    Q15:{text:"同僚にGP CONNECTを勧めたいと思いますか？",lo:"全く勧めない",hi:"積極的に勧める"},
+    Q16:{text:"今後GP CONNECTでもっと取り上げてほしいテーマを選んでください。",sub:"最大3つまで選択",opts:["賢いGPライフ（ワークショップ・組織文化・福利厚生・社内イベント等）","イベント（GP CONNECT愛情度テスト等の参加型コンテンツ）","GP STORY・GP PEOPLE（メンバー／チーム／組織長インタビュー）","KRAFTONゲーム（新作・イベント・ゲームショウ・テスト等）","ゲーム探求＆キュレーション（ジャンル・トレンド・おすすめ）","働き方（パブリッシング方法論・ケーススタディ・AI等）","Perspective（組織長寄稿などのソートリーダーシップ）","特に見たいテーマはない"]},
+    Q17:{text:"（任意）これまでのGP CONNECTで最も印象に残った号やコンテンツがあれば教えてください。"},
+    Q18:{text:"GP Slackチャンネルは、気兼ねなく意見を出したり反応したりできる環境だと思う。"},
+    Q19:{text:"GP Slackチャンネルに上がるコンテンツ・イベント・お知らせにどの程度反応（絵文字・コメント・参加等）しますか？",lo:"ほとんど反応しない",hi:"よく反応する"},
+    Q19_1:{text:"（任意）GP Slackチャンネルであまり反応しなくなる最大の理由は何ですか？",opts:["Slackの通知が多すぎる","反応する時間がない","内容が自分の関心と遠い","雰囲気に気後れする"],other:"その他"},
+    Q20:{text:"GP Slackチャンネルの現在の運営方法（コンテンツの種類・頻度・トーン等）に満足している。",lo:"非常に不満",hi:"非常に満足"},
+    Q21:{text:"GP CONNECTや社内コンテンツで見た話題が、Slackで話題になったり、同僚との会話のきっかけになったことがある。",lo:"ほとんどない",hi:"よくある"},
+    Q22:{text:"GPの社内コンテンツ・イベントを通じて同僚と近づいたと感じた瞬間はありますか？",sub:"当てはまるものをすべて選択",opts:["GP CONNECTニュースレターで他チーム・同僚の話を見たとき","Slackチャンネルで同僚の投稿・反応を見たとき","GP CONNECT愛情度テストのような社内クイズ・参加型イベントに参加したとき","Slackイベント（認証ショット・リレー等）に参加したとき","社内コンテンツでゲーム・趣味・関心が近い同僚を見つけたとき","特にコンテンツ・イベントで親しくなったことはない","よくわからない"]},
+    Q23:{text:"GP CONNECTニュースレターやSlackで見た同僚の話のおかげで、直接会ったことのない同僚にも親近感を覚えることがある。"},
+    Q24:{text:"GPの社内コンテンツ（インタビュー・メンバー紹介等）は、同僚の貢献・努力にしっかり光を当てていると感じる。"},
+    Q25:{text:"現在のGPの社内イベント（GP CONNECT愛情度テスト・認証ショット／リレー・ニュースレター連動イベント等）の運営に満足している。",lo:"非常に不満",hi:"非常に満足"},
+    Q26:{text:"今後もっと頻繁に開催してほしい社内イベントの形式は何ですか？",sub:"最大3つまで選択",opts:["GP CONNECT愛情度テストのようなクイズ・参加型イベント","Slackイベント（認証ショット・リレー・ミッション等）","ニュースレター連動イベント（カバー応募・コンテンツ公募等）","ゲームIP関連のオンラインイベント（試写会・新作紹介ライブ等）","関心テーマ別の小規模な集まり・勉強会（オンライン）","グローバルオフィスの同僚とつながるオンラインイベント","オフラインイベント（ワークショップ・懇親会等）","特に関心のある形式はない","よくわからない"]},
+    Q27:{text:"社内イベントへの参加をためらう最大の要因があれば何ですか？",sub:"当てはまるものをすべて選択",opts:["業務が忙しく時間を取りにくい","イベントの趣旨や内容がしっくりこない","参加方法に気後れする（知らない人と関わる・露出など）","通知を見逃した","参加をためらわせる要因は特にない"],other:"その他"},
+    Q28:{text:"（任意）GPの社内コンテンツ・イベントが普段のあなたの会社生活にどう根づいているか、一言または一文で表現してください。"},
+    Q29:{text:"（任意）GPの社内コンテンツ・イベント・チャネル運営でうまくいっていると思う点、そして改善が必要だと思う点を自由にお書きください。",tip:"「良い／良くない」といった一般的な感想よりも、思い浮かぶ具体的な号・コンテンツ・イベントがあれば一緒に書いていただけると助かります。"},
+    Q30:{text:"（任意）最後に、GP社内コミュニケーション運営チームに伝えたいご意見があれば自由にお書きください。"},
+    Q31:{text:"（任意）お住まいの地域を選択してください。",opts:["HQ（韓国在住）","地域オフィス（海外在住）"]},
+    Q31_hq:{text:"NaverPay 5,000ウォン分のギフトカードを受け取る携帯番号をご記入ください。",ph:"010-XXXX-XXXX",tip:"ハイフンを含めてご記入ください。"},
+    Q31_ov:{text:"Steam 5,000ウォン分のギフトカードをご希望の方は、以下の2点を必ずお願いします。<br>① Steamでフレンド追加 — フレンドコード <b>1616510350</b>（プロフィール名: publishing_internal_comm_T）にフレンド申請を送ってください。<br>② 下に、ご自身のSteam <b>プロフィール名（表示名）</b> をご記入ください。ログイン用のアカウント名ではありません。",ph:"Steamプロフィール名（表示名）",tip:"Steamアプリ右上のご自身の名前をクリック → 自分のプロフィールを表示 → ページ上部に表示される名前。"},
+  }
+}
+};
+const LANG_ORDER=["ko","en","zh","ja"];
+const LANG_SHORT={ko:"한국어",en:"EN",zh:"中文",ja:"日本語"};
+
+/* =================== 상태 =================== */
+let lang="ko", page=-1, answers={}, startTime=null, timerInt=null, submitting=false;
+let mode="survey";            // survey | adminLogin | adminDash
+let ALL=[], selOrg="전체", selTen="전체";
+const app=document.getElementById("app"), toastEl=document.getElementById("toast");
+const T=()=>I18N[lang];
+const QT=id=>I18N[lang].q[id];
+const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function toast(m){toastEl.textContent=m;toastEl.classList.add("show");clearTimeout(toastEl._t);toastEl._t=setTimeout(()=>toastEl.classList.remove("show"),2400);}
+function fmtTime(ms){const s=Math.floor(ms/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function anchors(id){const q=QT(id),a=T().agree;return {lo:q.lo||a[0],hi:q.hi||a[1]};}
+function optCount(id){const q=I18N.ko.q[id];return (q.opts||[]).length;}
+
+/* =================== 렌더 라우팅 =================== */
+function render(){window.scrollTo(0,0);
+  if(mode==="adminLogin")return renderLogin();
+  if(mode==="adminDash")return renderDashboardShell();
+  if(page===-1)return renderIntro();
+  if(page>=STRUCT.length)return renderDone();
+  renderSection(STRUCT[page]);
+}
+function langSwitcher(){
+  return `<div class="langsw">${LANG_ORDER.map(l=>`<button data-lang="${l}" class="${lang===l?'on':''}">${LANG_SHORT[l]}</button>`).join("")}</div>`;
+}
+function bindLang(){app.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{lang=b.dataset.lang;document.documentElement.lang=lang;render();});}
+function topbar(){
+  let nodes="";
+  for(let i=0;i<STRUCT.length;i++){const cls=i<page?"done":(i===page?"current":"");nodes+=`<div class="pnode ${cls}"><div class="pdot"></div></div>`;if(i<STRUCT.length-1)nodes+=`<div class="pline"><div class="fill" style="width:${i<page?100:0}%"></div></div>`;}
+  const right=startTime!==null?`<span class="timer" id="tmr">${fmtTime(Date.now()-startTime)}</span>`:langSwitcher();
+  const prog=(page>=0&&page<STRUCT.length)?`<div class="progress">${nodes}</div>`:"";
+  const test=TEST_MODE?`<div class="testbar">${T().ui.testbar}</div>`:"";
+  return `<div class="topbar"><div class="topbar-row"><span class="brand"><span class="dot"></span>${T().ui.title}</span>${right}</div>${prog}</div>${test}`;
+}
+function startTimer(){clearInterval(timerInt);timerInt=setInterval(()=>{const t=document.getElementById("tmr");if(t)t.textContent=fmtTime(Date.now()-startTime);},1000);}
+
+/* =================== 인트로 =================== */
+function renderIntro(){
+  const I=T().intro;
+  app.innerHTML=topbar()+`<div class="page">
+    <div class="hero"><h1>${I.t1}<br>${I.t2}</h1><p>${I.p}</p></div>
+    <div class="meta">${I.mk.map((k,i)=>`<div class="meta-row"><span class="k">${k}</span><span class="v">${I.mv[i]}</span></div>`).join("")}</div>
+    <div class="reward-card"><h3>${I.rt}</h3><p>${I.rp}</p><p style="margin:10px 0 0;font-size:12.5px;font-weight:700;color:var(--accent-deep);border-top:1px solid #F4C4CE;padding-top:10px">${I.rnote}</p></div>
+    <p class="assure">${I.assure}</p>
+    <div class="note" style="margin-top:16px">${I.def}</div>
+    <p class="contact">${I.contact}</p>
+    <div class="admin-link" id="goAdmin">🔒 관리자 모드</div>
+  </div>
+  <div class="nav"><button class="btn btn-primary" id="start">${T().ui.start}</button></div>`;
+  bindLang();
+  document.getElementById("start").onclick=()=>{startTime=Date.now();startTimer();page=0;render();};
+  document.getElementById("goAdmin").onclick=()=>{mode="adminLogin";render();};
+}
+
+/* =================== 섹션 =================== */
+function renderSection(sec){
+  const S=T().sec[sec.id];
+  let body=`<div class="page"><div class="sec-eyebrow">${S.e}</div><h2 class="sec-title">${S.t}</h2>
+    ${S.d?`<p class="sec-desc">${S.d}</p>`:""}
+    ${sec.note?`<div class="note">${T().misc.scaleNote}<br><span style="color:var(--ink-faint)">1: ${T().agree[0]} — 5: ${T().agree[1]}</span></div>`:""}`;
+  for(const it of sec.items){
+    if(it.t==="head"){body+=`<div class="group-head">${T().head[it.key]}</div>`;continue;}
+    if(it.t==="q"){if(it.showIf&&!it.showIf(answers))continue;body+=renderQ(it);}
+  }
+  body+=`</div>`;
+  const isLast=page===STRUCT.length-1;
+  app.innerHTML=topbar()+body+`<div class="nav"><button class="btn btn-ghost" id="prev">${T().ui.prev}</button><button class="btn btn-primary" id="next">${isLast?T().ui.submit:T().ui.next}</button></div>`;
+  bindLang();bindHandlers(sec);
+  document.getElementById("prev").onclick=()=>{page--;render();};
+  document.getElementById("next").onclick=()=>tryNext(sec);
+}
+function condNote(id){
+  if(id==="Q14_1")return `<div class="cond-note">Q14 → 1~2</div>`;
+  if(id==="Q19_1")return `<div class="cond-note">Q19 → 1~2</div>`;
+  if(id==="Q31_hq"||id==="Q31_ov")return `<div class="cond-note">Q31</div>`;
+  return "";
+}
+function renderQ(it){
+  const q=QT(it.id),v=answers[it.id];let inner="";
+  if(it.type==="scale"){const an=anchors(it.id);let b="";for(let n=1;n<=5;n++)b+=`<button data-q="${it.id}" data-v="${n}" class="${v===n?'on':''}">${n}</button>`;inner=`<div class="scale">${b}</div><div class="anchors"><span>${an.lo}</span><span>${an.hi}</span></div>`;}
+  else if(it.type==="nps"){const an=anchors(it.id);let b="";for(let n=0;n<=10;n++)b+=`<button data-q="${it.id}" data-v="${n}" class="${v===n?'on':''}">${n}</button>`;inner=`<div class="nps">${b}</div><div class="anchors"><span>${an.lo}</span><span>${an.hi}</span></div>`;}
+  else if(it.type==="single"||it.type==="single_other"){const cur=(v&&v.idx!==undefined)?v.idx:v;let o="";
+    q.opts.forEach((op,i)=>o+=`<div class="opt ${cur===i?'on':''}" data-qs="${it.id}" data-i="${i}"><span class="tick"></span><span>${op}</span></div>`);
+    if(it.other){const oi=q.opts.length,on=cur===oi;o+=`<div class="opt ${on?'on':''}" data-qs="${it.id}" data-i="${oi}"><span class="tick"></span><span>${q.other}</span></div>`;if(on)o+=`<input type="text" class="subinput" data-other="${it.id}" placeholder="${T().ui.selfree}" value="${esc(v&&v.other||'')}">`;}inner=o;}
+  else if(it.type==="multi"||it.type==="multi_other"){const arr=Array.isArray(v&&v.list)?v.list:(Array.isArray(v)?v:[]);const atMax=it.max&&arr.length>=it.max;let o="";
+    q.opts.forEach((op,i)=>{const on=arr.includes(i);o+=`<div class="opt ${on?'on':''} ${(!on&&atMax)?'disabled':''}" data-qm="${it.id}" data-i="${i}"><span class="tick sq"></span><span>${op}</span></div>`;});
+    if(it.other){const oi=q.opts.length,on=arr.includes(oi);o+=`<div class="opt ${on?'on':''} ${(!on&&atMax)?'disabled':''}" data-qm="${it.id}" data-i="${oi}"><span class="tick sq"></span><span>${q.other}</span></div>`;if(on)o+=`<input type="text" class="subinput" data-other="${it.id}" placeholder="${T().ui.selfree}" value="${esc(v&&v.other||'')}">`;}
+    if(it.max)o+=`<div class="maxhint">${T().q.Q14.sub?'':''}${(lang==='ko'?'최대 '+it.max+'개 · 현재 '+arr.length+'개':lang==='en'?'Up to '+it.max+' · '+arr.length+' selected':lang==='zh'?'最多'+it.max+'项 · 已选'+arr.length:'最大'+it.max+'個 · 現在'+arr.length+'個')}</div>`;inner=o;}
+  else if(it.type==="text")inner=`<textarea data-text="${it.id}" placeholder="${T().ui.freeph}">${esc(v||'')}</textarea>`;
+  else if(it.type==="text_one")inner=`<input type="text" data-text="${it.id}" placeholder="${esc(q.ph||'')}" value="${esc(v||'')}">`;
+  return `<div class="q" id="card-${it.id}">${condNote(it.id)}<span class="q-num">${qLabel(it.id)}</span>${it.optional?`<span class="q-opt">●</span>`:''}${q.sub?`<span class="q-opt">(${q.sub})</span>`:''}<p class="q-text">${q.text}</p>${q.tip?`<div class="q-tip">${q.tip}</div>`:''}${inner}</div>`;
+}
+function bindHandlers(sec){
+  app.querySelectorAll('[data-q][data-v]').forEach(b=>b.onclick=()=>{answers[b.dataset.q]=Number(b.dataset.v);(b.dataset.q==="Q14"||b.dataset.q==="Q19")?render():renderSection(sec);});
+  app.querySelectorAll('[data-qs]').forEach(o=>o.onclick=()=>{const id=o.dataset.qs,i=Number(o.dataset.i),it=findItem(id);if(it.other)answers[id]={idx:i,other:(answers[id]&&answers[id].other)||""};else answers[id]=i;(id==="Q31")?render():renderSection(sec);});
+  app.querySelectorAll('[data-qm]').forEach(o=>o.onclick=()=>{if(o.classList.contains("disabled"))return;const id=o.dataset.qm,i=Number(o.dataset.i),it=findItem(id);const cur=answers[id];let arr=Array.isArray(cur&&cur.list)?[...cur.list]:(Array.isArray(cur)?[...cur]:[]);if(arr.includes(i))arr=arr.filter(x=>x!==i);else{if(it.max&&arr.length>=it.max){toast(T().ui.max(it.max));return;}arr.push(i);}if(it.other)answers[id]={list:arr,other:(cur&&cur.other)||""};else answers[id]=arr;renderSection(sec);});
+  app.querySelectorAll('[data-other]').forEach(i=>i.oninput=()=>{const id=i.dataset.other,cur=answers[id]||{};answers[id]={...cur,other:i.value};});
+  app.querySelectorAll('[data-text]').forEach(i=>i.oninput=()=>{answers[i.dataset.text]=i.value;});
+}
+function isAnswered(it){const v=answers[it.id];if(v===undefined||v===null||v==="")return false;if(it.type==="single_other")return v.idx!==undefined&&v.idx!==null;if(it.type==="single")return typeof v==="number";if(it.type==="multi"||it.type==="multi_other"){const arr=Array.isArray(v&&v.list)?v.list:(Array.isArray(v)?v:[]);return arr.length>0;}return true;}
+async function tryNext(sec){
+  if(submitting)return;
+  const missing=[];
+  for(const it of sec.items){if(it.t!=="q"||it.optional)continue;if(it.showIf&&!it.showIf(answers))continue;if(!isAnswered(it))missing.push(it.id);}
+  if(missing.length){app.querySelectorAll(".q").forEach(c=>c.classList.remove("missing"));missing.forEach(id=>{const e=document.getElementById("card-"+id);if(e)e.classList.add("missing");});const f=document.getElementById("card-"+missing[0]);if(f)f.scrollIntoView({behavior:"smooth",block:"center"});toast(T().ui.missing(missing.length));return;}
+  if(page===STRUCT.length-1)await submitSurvey();else{page++;render();}
+}
+
+/* =================== 정규화(한국어 기준) → 시트 전송 =================== */
+function canonical(id){
+  const it=findItem(id),v=answers[id],ko=I18N.ko.q[id];
+  if(v===undefined||v===null||v==="")return "";
+  if(it.type==="scale"||it.type==="nps")return String(v);
+  if(it.type==="single")return ko.opts[v]||"";
+  if(it.type==="single_other"){const oi=ko.opts.length;return v.idx===oi?`${ko.other}: ${v.other||""}`:(ko.opts[v.idx]||"");}
+  if(it.type==="multi"){return (v||[]).map(i=>ko.opts[i]).join(" / ");}
+  if(it.type==="multi_other"){const oi=ko.opts.length;return (v.list||[]).map(i=>i===oi?`${ko.other}: ${v.other||""}`:ko.opts[i]).join(" / ");}
+  return String(v);
+}
+function buildPayload(){
+  const cols=[];STRUCT.forEach(s=>s.items.forEach(it=>{if(it.t==="q")cols.push(it.id);}));
+  return {language:lang,durationSec:Math.round((startTime?Date.now()-startTime:0)/1000),header:cols.map(qLabel),values:cols.map(canonical)};
+}
+function sendToSheet(payload){
+  const body=JSON.stringify(payload);
+  // 1순위: sendBeacon (CORS·리다이렉트에 강한 fire-and-forget 전송)
+  try{
+    if(navigator.sendBeacon && navigator.sendBeacon(SCRIPT_URL,new Blob([body],{type:"text/plain;charset=utf-8"})))
+      return Promise.resolve();
+  }catch(e){}
+  // 2순위: fetch no-cors
+  return fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body,keepalive:true});
+}
+async function submitSurvey(){
+  submitting=true;clearInterval(timerInt);
+  const btn=document.getElementById("next");if(btn){btn.textContent=T().ui.saving;btn.disabled=true;}
+  const payload=buildPayload();
+  try{
+    if(!TEST_MODE)await sendToSheet(payload);
+    else console.log("[TEST MODE] payload:",payload);
+    page=STRUCT.length;submitting=false;renderDone();
+  }catch(err){
+    submitting=false;toast(T().ui.sendFail);
+    if(btn){btn.textContent=T().ui.submit;btn.disabled=false;}
+  }
+}
+
+/* =================== 완료 =================== */
+function renderDone(){
+  const sub=T().ui.doneSub.replace(/\n/g,"<br>");
+  app.innerHTML=`<div class="page"><div class="done-hero"><div class="done-mark"></div><h1>${T().ui.doneTitle}</h1><p>${sub}</p>
+    <span class="done-link" id="home">${T().ui.home}</span></div>
+    <div class="admin-link" id="goAdmin2">🔒 관리자 모드</div></div>`;
+  document.getElementById("home").onclick=()=>{answers={};page=-1;startTime=null;submitting=false;render();};
+  document.getElementById("goAdmin2").onclick=()=>{mode="adminLogin";render();};
+}
+
+/* =================== 관리자 로그인 =================== */
+function renderLogin(){
+  app.innerHTML=`<div class="topbar"><div class="topbar-row"><span class="brand"><span class="dot"></span>GP 서베이 · 관리자</span><span class="logout" id="back">← 설문</span></div></div>
+  <div class="page"><div class="login-wrap"><div class="login-ico">🔒</div><h1>관리자 로그인</h1><p>결과 대시보드를 보려면 비밀번호를 입력하세요.</p>
+    <input type="password" id="pw" placeholder="비밀번호" style="text-align:center;margin-top:22px;max-width:280px;display:inline-block">
+  </div></div>
+  <div class="nav"><button class="btn btn-primary" id="login">로그인</button></div>`;
+  document.getElementById("back").onclick=()=>{mode="survey";render();};
+  const pw=document.getElementById("pw");pw.focus();
+  const go=()=>{if(pw.value===ADMIN_PW){mode="adminDash";render();}else{toast("비밀번호가 올바르지 않습니다");pw.value="";pw.focus();}};
+  document.getElementById("login").onclick=go;
+  pw.onkeydown=e=>{if(e.key==="Enter")go();};
+}
+
+/* =================== 대시보드 =================== */
+function jsonp(url){return new Promise((res,rej)=>{const cb="__cb"+Math.random().toString(36).slice(2);const s=document.createElement("script");window[cb]=d=>{res(d);try{delete window[cb];}catch(e){}s.remove();};s.onerror=()=>{rej(new Error("net"));s.remove();};s.src=url+(url.indexOf("?")>=0?"&":"?")+"callback="+cb;document.body.appendChild(s);});}
+
+async function renderDashboardShell(){
+  app.innerHTML=`<div class="topbar"><div class="topbar-row"><span class="brand"><span class="dot"></span>관리자 · 결과 대시보드</span><span class="logout" id="logout">로그아웃</span></div></div>
+  <div class="page"><div id="dashbody" style="padding-top:6px;color:var(--ink-soft);font-size:14px">결과 불러오는 중…</div></div>`;
+  document.getElementById("logout").onclick=()=>{mode="survey";selOrg="전체";selTen="전체";render();};
+  if(TEST_MODE){document.getElementById("dashbody").innerHTML="테스트 모드입니다. SCRIPT_URL을 설정하고 배포하면 시트 집계가 표시됩니다.";return;}
+  try{
+    const d=await jsonp(SCRIPT_URL+"?key="+encodeURIComponent(DASH_KEY));
+    if(!d||!d.ok){document.getElementById("dashbody").innerHTML="데이터를 불러오지 못했습니다. (DASH_KEY / 배포 버전 확인)";return;}
+    ALL=d.rows||[];drawDashboard();
+  }catch(e){const b=document.getElementById("dashbody");if(b)b.innerHTML="네트워크 오류로 불러오지 못했습니다.";}
+}
+function filtered(){return ALL.filter(r=>(selOrg==="전체"||(r.a&&r.a.Q1===selOrg))&&(selTen==="전체"||(r.a&&r.a.Q2===selTen)));}
+
+function drawDashboard(){
+  const body=document.getElementById("dashbody");if(!body)return;
+  const rs=filtered(),n=rs.length;
+  const durs=ALL.map(r=>r.dur*1000).filter(x=>x>0);
+  const avgDur=durs.length?fmtTime(durs.reduce((a,b)=>a+b,0)/durs.length):"–";
+  const rate=Math.round(ALL.length/TARGET*100);
+
+  const npsVals=rs.map(r=>r.a&&r.a.Q15).filter(v=>typeof v==="number");
+  let npsHtml="";
+  if(npsVals.length){
+    const P=npsVals.filter(v=>v>=9).length,Pa=npsVals.filter(v=>v>=7&&v<=8).length,D=npsVals.filter(v=>v<=6).length,t=npsVals.length;
+    const nps=Math.round((P/t-D/t)*100);
+    npsHtml=`<div class="dcard span2"><div class="dl">콘텐츠 NPS · Q15 (추천 의향)</div>
+      <div class="nps-big"><span class="v">${nps>0?"+":""}${nps}</span><span class="ds">응답 ${t}명</span></div>
+      <div class="nps-seg"><span style="width:${P/t*100}%;background:var(--accent)"></span><span style="width:${Pa/t*100}%;background:var(--amber)"></span><span style="width:${D/t*100}%;background:var(--danger)"></span></div>
+      <div class="nps-legend"><span><i style="background:var(--accent)"></i>추천 ${P}</span><span><i style="background:var(--amber)"></i>중립 ${Pa}</span><span><i style="background:var(--danger)"></i>비추천 ${D}</span></div></div>`;
+  }
+  const effIds=["Q3","Q4","Q5","Q6","Q7","Q8","Q9","Q10","Q11","Q12"];let effSum=0,effN=0;
+  rs.forEach(r=>effIds.forEach(id=>{const v=r.a&&r.a[id];if(typeof v==="number"){effSum+=v;effN++;}}));
+  const eff=effN?(effSum/effN).toFixed(2):"–";
+
+  let html=`<div class="dash-cards">
+    <div class="dcard"><div class="dl">총 응답 수</div><div class="dn">${ALL.length}</div><div class="ds">목표 ${TARGET}명 · ${rate}%</div></div>
+    <div class="dcard"><div class="dl">평균 소요</div><div class="dn">${avgDur}</div><div class="ds">전체 응답 기준</div></div>
+    ${npsHtml}
+    <div class="dcard"><div class="dl">콘텐츠 효과 평균</div><div class="dn">${eff}<span style="font-size:14px;color:var(--ink-faint)"> /5</span></div><div class="ds">Q3~Q12 평균</div></div>
+    <div class="dcard"><div class="dl">필터 응답 수</div><div class="dn">${n}</div><div class="ds">${selOrg}${selTen!=="전체"?" · "+selTen:""}</div></div>
+  </div>`;
+
+  const orgs=I18N.ko.q.Q1.opts,tens=I18N.ko.q.Q2.opts;
+  html+=`<div class="filters">
+    <select id="fOrg"><option>전체</option>${orgs.map(o=>`<option ${selOrg===o?"selected":""}>${o}</option>`).join("")}</select>
+    <select id="fTen"><option>전체</option>${tens.map(o=>`<option ${selTen===o?"selected":""}>${o}</option>`).join("")}</select>
+  </div>`;
+
+  if(n===0){html+=`<div class="empty-q" style="text-align:center;margin-top:40px;font-size:14px">아직 집계된 응답이 없습니다.<br>설문을 제출하면 여기에 결과가 쌓입니다.</div>`;}
+  else{
+    STRUCT.forEach(sec=>{
+      const sx=I18N.ko.sec[sec.id];
+      html+=`<div class="dash-sec">${sx.e==="마지막"?"보상":sx.e} · ${sx.t}</div>`;
+      sec.items.forEach(it=>{if(it.t==="q")html+=renderAgg(it,rs);});
+    });
+  }
+
+  html+=`<div class="dash-actions"><button class="abtn" id="refresh">새로고침</button></div>
+  <div class="secnote">집계는 권한 걸린 구글시트에서 실시간으로 불러옵니다. 자유응답 원문·보상 연락처는 보안을 위해 여기 표시되지 않으며 시트에서만 확인할 수 있습니다. 비밀번호는 가벼운 칸막이이며 실제 보안 기능이 아닙니다.</div>`;
+
+  body.innerHTML=html;
+  document.getElementById("fOrg").onchange=e=>{selOrg=e.target.value;drawDashboard();};
+  document.getElementById("fTen").onchange=e=>{selTen=e.target.value;drawDashboard();};
+  document.getElementById("refresh").onclick=()=>renderDashboardShell();
+}
+
+function tally(rs,key){const t={};let answered=0;rs.forEach(r=>{const v=r.a&&r.a[key];if(v==null||v==="")return;answered++;String(v).split(" / ").forEach(o=>{o=o.trim();if(!o)return;if(o.indexOf("기타")===0||o.indexOf("그 외")===0)o="기타 (직접입력)";t[o]=(t[o]||0)+1;});});return {t,answered};}
+
+function renderAgg(it,rs){
+  const key=qLabel(it.id),q=I18N.ko.q[it.id];
+  const head=`<div class="dqn">${key}</div><div class="dqt">${esc(q.text)}</div>`;
+  if(it.type==="text"||it.type==="text_one")return ""; // 자유응답·보상 연락처는 시트에서만
+  if(it.type==="scale"){
+    const vals=rs.map(r=>r.a&&r.a[key]).filter(v=>typeof v==="number");
+    if(!vals.length)return `<div class="dq">${head}<div class="empty-q">응답 없음</div></div>`;
+    const cnt=[0,0,0,0,0];vals.forEach(v=>cnt[v-1]++);const mean=(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
+    let bars="";for(let i=5;i>=1;i--){const c=cnt[i-1],pc=Math.round(c/vals.length*100);bars+=`<div class="bar"><div class="bar-l">${i}점</div><div class="bar-track"><div class="bar-fill" style="width:${pc}%"></div></div><div class="bar-v">${c} · ${pc}%</div></div>`;}
+    return `<div class="dq">${head}<div class="dqmeta">평균 ${mean} / 5 · 응답 ${vals.length}</div>${bars}</div>`;
+  }
+  if(it.type==="nps"){
+    const vals=rs.map(r=>r.a&&r.a[key]).filter(v=>typeof v==="number");
+    if(!vals.length)return `<div class="dq">${head}<div class="empty-q">응답 없음</div></div>`;
+    const mean=(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);const cnt={};vals.forEach(v=>cnt[v]=(cnt[v]||0)+1);
+    let bars="";for(let i=10;i>=0;i--){const c=cnt[i]||0,pc=Math.round(c/vals.length*100);bars+=`<div class="bar"><div class="bar-l">${i}</div><div class="bar-track"><div class="bar-fill" style="width:${pc}%"></div></div><div class="bar-v">${c} · ${pc}%</div></div>`;}
+    return `<div class="dq">${head}<div class="dqmeta">평균 ${mean} / 10 · 응답 ${vals.length}</div>${bars}</div>`;
+  }
+  // 객관식 / 복수응답
+  const {t,answered}=tally(rs,key);
+  if(!answered)return `<div class="dq">${head}<div class="empty-q">응답 없음</div></div>`;
+  const labels=(q.opts||[]).slice();if(q.other)labels.push("기타 (직접입력)");
+  const multi=(it.type==="multi"||it.type==="multi_other");
+  let bars="";labels.forEach(op=>{const c=t[op]||0;const pc=Math.round(c/answered*100);bars+=`<div class="bar"><div class="bar-l wide">${esc(op)}</div><div class="bar-track"><div class="bar-fill" style="width:${pc}%"></div></div><div class="bar-v">${c} · ${pc}%</div></div>`;});
+  return `<div class="dq">${head}<div class="dqmeta">응답 ${answered}명${multi?" · 복수응답":""}</div>${bars}</div>`;
+}
+
+render();
+</script>
+</body>
+</html>
